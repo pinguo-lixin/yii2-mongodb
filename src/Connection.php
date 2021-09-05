@@ -7,6 +7,7 @@
 
 namespace yii\mongodb;
 
+use DBStorage\Codec\Adapter\PGMongoStorageComponent;
 use MongoDB\Driver\Manager;
 use yii\base\Component;
 use yii\base\InvalidConfigException;
@@ -155,6 +156,8 @@ class Connection extends Component
      */
     public $fileStreamWrapperClass = 'yii\mongodb\file\StreamWrapper';
 
+    public $storageName = PGMongoStorageComponent::DEFAULT_NAME;
+
     /**
      * @var string name of the MongoDB database to use by default.
      * If this field left blank, connection instance will attempt to determine it from
@@ -285,6 +288,7 @@ class Connection extends Component
             'class' => 'yii\mongodb\Database',
             'name' => $name,
             'connection' => $this,
+            'storageName' => $this->storageName,
         ]);
     }
 
@@ -412,6 +416,7 @@ class Connection extends Component
             'db' => $this,
             'databaseName' => $databaseName,
             'document' => $document,
+            'storageName' => $this->storageName,
         ]);
     }
 

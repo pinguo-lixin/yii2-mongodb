@@ -29,6 +29,8 @@ class Database extends BaseObject
      */
     public $name;
 
+    public $storageName;
+
     /**
      * @var Collection[] list of collections.
      */
@@ -80,6 +82,7 @@ class Database extends BaseObject
             'class' => 'yii\mongodb\Collection',
             'database' => $this,
             'name' => $name,
+            'storageName' => $this->storageName,
         ]);
     }
 

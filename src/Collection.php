@@ -7,6 +7,7 @@
 
 namespace yii\mongodb;
 
+use DBStorage\Codec\Adapter\MongoCodec;
 use MongoDB\BSON\ObjectID;
 use yii\base\BaseObject;
 use Yii;
@@ -44,6 +45,17 @@ class Collection extends BaseObject
      * @var string name of this collection.
      */
     public $name;
+
+    public $storageName;
+
+    /** @var MongoCodec */
+    private $_codec;
+
+    public function init()
+    {
+        $this->_codec = MongoCodec::instance($this->storageName);
+        parent::init();
+    }
 
 
     /**
@@ -238,7 +250,12 @@ class Collection extends BaseObject
         $options['limit'] = 1;
         $cursor = $this->find($condition, $fields, $options);
         $rows = $cursor->toArray();
-        return empty($rows) ? null : current($rows);
+
+        if (empty($rows)) {
+            return null;
+        }
+
+        return $this->_codec->decode($this->name, current($rows));
     }
 
     /**
@@ -262,7 +279,8 @@ class Collection extends BaseObject
      */
     public function findAndModify($condition, $update, $options = [])
     {
-        return $this->database->createCommand()->findAndModify($this->name, $condition, $update, $options);
+        $res = $this->database->createCommand()->findAndModify($this->name, $condition, $update, $options);
+        return $this->_codec->decode($this->name, $res);
     }
 
     /**

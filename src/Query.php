@@ -7,6 +7,7 @@
 
 namespace yii\mongodb;
 
+use DBStorage\Codec\Adapter\MongoCodec;
 use yii\base\Component;
 use yii\db\QueryInterface;
 use yii\db\QueryTrait;
@@ -59,6 +60,19 @@ class Query extends Component implements QueryInterface
      * @see options()
      */
     public $options = [];
+
+    protected $storageName;
+
+    /** @var MongoCodec */
+    protected $_codec;
+
+    private $_alreadyDecoded = false;
+
+    public function setStorageName($name)
+    {
+        $this->storageName = $name;
+        $this->_codec = MongoCodec::instance($name);
+    }
 
 
     /**
@@ -177,6 +191,7 @@ class Query extends Component implements QueryInterface
      */
     public function prepare()
     {
+        $this->_alreadyDecoded = false;
         return $this;
     }
 
@@ -245,6 +260,16 @@ class Query extends Component implements QueryInterface
             } else {
                 $result = false;
             }
+        }
+
+        if ($result && !$this->_alreadyDecoded) {
+            $this->_alreadyDecoded = true;
+
+            $collName = $this->from;
+            if (is_array($collName)) {
+                $collName = $this->from[1];
+            }
+            $result = $this->_codec->decode($collName, $result);
         }
 
         return $result;
@@ -343,6 +368,18 @@ class Query extends Component implements QueryInterface
         foreach ($rows as $row) {
             $result[ArrayHelper::getValue($row, $this->indexBy)] = $row;
         }
+
+        if ($result && !$this->_alreadyDecoded) {
+            $this->_alreadyDecoded = true;
+
+            $collName = $this->from;
+            if (is_array($collName)) {
+                $collName = $this->from[1];
+            }
+
+            $result = $this->_codec->decode($collName, $result);
+        }
+        
         return $result;
     }
 

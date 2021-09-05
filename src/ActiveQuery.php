@@ -7,6 +7,7 @@
 
 namespace yii\mongodb;
 
+use DBStorage\Codec\Adapter\PGMongoStorageComponent;
 use yii\db\ActiveQueryInterface;
 use yii\db\ActiveQueryTrait;
 use yii\db\ActiveRelationTrait;
@@ -78,6 +79,16 @@ class ActiveQuery extends Query implements ActiveQueryInterface
     public function __construct($modelClass, $config = [])
     {
         $this->modelClass = $modelClass;
+
+        $storageName = PGMongoStorageComponent::DEFAULT_NAME;
+        if (method_exists($modelClass, 'pgStorageName')) {
+            $name = call_user_func([$modelClass, 'pgStorageName']);
+            if ($name && is_string($name)) {
+                $storageName = $name;
+            }
+        }
+        $config = array_merge(['storageName' => $storageName], $config);
+        
         parent::__construct($config);
     }
 

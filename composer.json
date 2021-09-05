@@ -1,5 +1,5 @@
 {
-    "name": "yiisoft/yii2-mongodb",
+    "name": "pgwireless/yii2-mongodb",
     "description": "MongoDB extension for the Yii framework",
     "keywords": ["yii2", "mongo", "mongodb", "active-record", "gridfs"],
     "type": "yii2-extension",
@@ -20,7 +20,8 @@
     "require": {
         "yiisoft/yii2": "~2.0.39",
         "ext-mongodb": ">=1.0.0",
-        "paragonie/random_compat": ">=1"
+        "paragonie/random_compat": ">=1",
+        "pgwireless/db-storage": "*@dev"
     },
     "require-dev": {
         "phpunit/phpunit": "4.8.27|~5.7.21|^6.2"
@@ -29,6 +30,10 @@
         {
             "type": "composer",
             "url": "https://asset-packagist.org"
+        },
+        {
+            "type": "path",
+            "url": "../db-storage"
         }
     ],
     "autoload": {

@@ -7,6 +7,7 @@
 
 namespace yii\mongodb;
 
+use DBStorage\Codec\Adapter\MongoCodec;
 use MongoDB\BSON\ObjectID;
 use MongoDB\Driver\BulkWrite;
 use MongoDB\Driver\Exception\RuntimeException;
@@ -73,6 +74,11 @@ class Command extends BaseObject
      */
     public $document = [];
 
+    public $storageName;
+
+    /** @var MongoCodec */
+    protected $_codec;
+
     /**
      * @var ReadPreference|int|string|null command read preference.
      */
@@ -86,6 +92,11 @@ class Command extends BaseObject
      */
     private $_readConcern;
 
+    public function init()
+    {
+        $this->_codec = MongoCodec::instance($this->storageName);
+        parent::init();
+    }
 
     /**
      * Returns read preference for this command.
@@ -211,6 +222,15 @@ class Command extends BaseObject
     {
         $databaseName = $this->databaseName === null ? $this->db->defaultDatabaseName : $this->databaseName;
 
+        foreach ($this->document as $i => $op) {
+            if (!empty($op['document'])) {
+                $this->document[$i]['document'] = $this->_codec->encode($collectionName, $op['document']);
+            }
+            if (!empty($op['condition'])) {
+                $this->document[$i]['condition'] = $this->_codec->encode($collectionName, $op['condition']);
+            }
+        }
+
         $token = $this->log([$databaseName, $collectionName, 'bulkWrite'], $this->document, __METHOD__);
 
         try {
@@ -260,6 +280,8 @@ class Command extends BaseObject
     public function query($collectionName, $options = [])
     {
         $databaseName = $this->databaseName === null ? $this->db->defaultDatabaseName : $this->databaseName;
+
+        $this->document = $this->_codec->encode($collectionName, $this->document);
 
         $token = $this->log(
             'find',
@@ -409,6 +431,7 @@ class Command extends BaseObject
      */
     public function count($collectionName, $condition = [], $options = [])
     {
+        $condition = $this->_codec->encode($collectionName, $condition);
         $this->document = $this->db->getQueryBuilder()->count($collectionName, $condition, $options);
 
         $result = current($this->execute()->toArray());
@@ -648,6 +671,7 @@ class Command extends BaseObject
     public function distinct($collectionName, $fieldName, $condition = [], $options = [])
     {
         $this->document = $this->db->getQueryBuilder()->distinct($collectionName, $fieldName, $condition, $options);
+        $this->document = $this->_codec->encode($collectionName, $this->document);
         $cursor = $this->execute();
 
         $result = current($cursor->toArray());
