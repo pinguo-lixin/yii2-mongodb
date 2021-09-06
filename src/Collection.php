@@ -255,7 +255,7 @@ class Collection extends BaseObject
             return null;
         }
 
-        return $this->_codec->decode($this->name, current($rows));
+        return current($rows);
     }
 
     /**
@@ -279,8 +279,7 @@ class Collection extends BaseObject
      */
     public function findAndModify($condition, $update, $options = [])
     {
-        $res = $this->database->createCommand()->findAndModify($this->name, $condition, $update, $options);
-        return $this->_codec->decode($this->name, $res);
+        return $this->database->createCommand()->findAndModify($this->name, $condition, $update, $options);
     }
 
     /**

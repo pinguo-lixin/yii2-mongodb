@@ -99,6 +99,21 @@ class Command extends BaseObject
     }
 
     /**
+     * get CursorProxy if codec exist
+     *
+     * @param string $collectionName
+     * @param \MongoDB\Driver\Cursor $cursor
+     * @return \MongoDB\Driver\Cursor|CursorProxy
+     */
+    public function cursorProxy($collectionName, \MongoDB\Driver\Cursor $cursor)
+    {
+        if ($codec = $this->_codec->getCodec($collectionName)) {
+            return new CursorProxy($cursor, $codec);
+        }
+        return $cursor;
+    }
+
+    /**
      * Returns read preference for this command.
      * @return ReadPreference read preference.
      */
@@ -306,6 +321,7 @@ class Command extends BaseObject
             $query = new \MongoDB\Driver\Query($this->document, $options);
             $this->db->open();
             $cursor = $this->db->manager->executeQuery($databaseName . '.' . $collectionName, $query, $this->getReadPreference());
+            $cursor = $this->cursorProxy($collectionName, $cursor);
             $cursor->setTypeMap($this->db->typeMap);
 
             $this->endProfile($token, __METHOD__);
@@ -657,7 +673,7 @@ class Command extends BaseObject
             return null;
         }
 
-        return $result['value'];
+        return $this->_codec->encode($collectionName, $result['value']);
     }
 
     /**
@@ -678,6 +694,14 @@ class Command extends BaseObject
 
         if (!isset($result['values']) || !is_array($result['values'])) {
             return false;
+        }
+
+        if ($codec = $this->_codec->getFieldCodec($collectionName, $fieldName)) {
+            $values = [];
+            foreach ((array)$result['values'] as $v) {
+                $values[] = $codec->encode($v);
+            }
+            return $values;
         }
 
         return $result['values'];
