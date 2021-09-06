@@ -664,6 +664,9 @@ class Command extends BaseObject
      */
     public function findAndModify($collectionName, $condition = [], $update = [], $options = [])
     {
+        $condition = $this->_codec->encode($collectionName, $condition);
+        $update    = $this->_codec->encode($collectionName, $update);
+
         $this->document = $this->db->getQueryBuilder()->findAndModify($collectionName, $condition, $update, $options);
         $cursor = $this->execute();
 
@@ -673,7 +676,7 @@ class Command extends BaseObject
             return null;
         }
 
-        return $this->_codec->encode($collectionName, $result['value']);
+        return $this->_codec->decode($collectionName, $result['value']);
     }
 
     /**
@@ -686,8 +689,8 @@ class Command extends BaseObject
      */
     public function distinct($collectionName, $fieldName, $condition = [], $options = [])
     {
+        $condition = $this->_codec->encode($collectionName, $condition);
         $this->document = $this->db->getQueryBuilder()->distinct($collectionName, $fieldName, $condition, $options);
-        $this->document = $this->_codec->encode($collectionName, $this->document);
         $cursor = $this->execute();
 
         $result = current($cursor->toArray());
@@ -699,7 +702,7 @@ class Command extends BaseObject
         if ($codec = $this->_codec->getFieldCodec($collectionName, $fieldName)) {
             $values = [];
             foreach ((array)$result['values'] as $v) {
-                $values[] = $codec->encode($v);
+                $values[] = $codec->decode($v);
             }
             return $values;
         }
